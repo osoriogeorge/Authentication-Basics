@@ -77,14 +77,22 @@ app.get("/", (req, res) => {
 app.get("/sign-up", (req, res) => res.render("sign-up-form"));
 
 app.post("/sign-up", async (req, res, next) => {
+  const { first_name, last_name, username, password, confirmPassword } =
+    req.body;
+
+  if (password !== confirmPassword) {
+    return res.render("sign-up-form", { error: "Passwords do not match" });
+  }
+
   try {
-    const hashedPassword = await bcrypt.hash(req.body.password, 10); // El segundo argumento (10) es el "salt rounds"
+    const hashedPassword = await bcrypt.hash(password, 10);
     await pool.query(
-      "INSERT INTO users (username, password_hash) VALUES ($1, $2)",
-      [req.body.username, hashedPassword]
+      "INSERT INTO users (first_name, last_name, username, password_hash) VALUES ($1, $2, $3, $4)",
+      [first_name, last_name, username, hashedPassword]
     );
     res.redirect("/");
   } catch (err) {
+    console.error(err);
     return next(err);
   }
 });
