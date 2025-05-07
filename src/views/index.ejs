@@ -2,21 +2,71 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Log In</title>
+    <link rel="stylesheet" href="../styles/style.css" />
+    <title>Anonymous Writers' Club</title>
   </head>
   <body>
+    <h1>Welcome to the Anonymous Writers' Club</h1>
+
     <% if (currentUser) { %>
-    <h1>WELCOME BACK <%= currentUser.username %></h1>
-    <a href="/log-out">LOG OUT</a>
+    <p>Welcome, <%= currentUser.first_name %>!</p>
+    <p><a href="/log-out">Log Out</a></p>
+    <hr />
+    <h2>Create a New Post</h2>
+    <form action="/new-post" method="POST">
+      <div>
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" required />
+      </div>
+      <div>
+        <label for="content">Content:</label>
+        <textarea id="content" name="content" rows="5" required></textarea>
+      </div>
+      <button type="submit">Create Post</button>
+    </form>
+    <hr />
+    <h2>Posts from Members</h2>
     <% } else { %>
-    <h1>please log in</h1>
+    <p>
+      Join our exclusive club to see who wrote these amazing anonymous posts!
+    </p>
+    <h2>Log In</h2>
     <form action="/log-in" method="POST">
-      <label for="username">Username</label>
-      <input id="username" name="username" placeholder="username" type="text" />
-      <label for="password">Password</label>
-      <input id="password" name="password" type="password" />
+      <div>
+        <label for="username">Email:</label>
+        <input type="email" id="username" name="username" required />
+      </div>
+      <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required />
+      </div>
       <button type="submit">Log In</button>
     </form>
+    <hr />
+    <h2>Anonymous Posts</h2>
+    <% } %> <% if (posts && posts.length > 0) { %>
+    <ul>
+      <% posts.forEach(post => { %>
+      <li>
+        <h3><%= post.title %></h3>
+        <p><%= post.content %></p>
+        <p>
+          Created At: <%= post.created_at.toLocaleDateString() %> <%=
+          post.created_at.toLocaleTimeString() %>
+        </p>
+        <% if (currentUser) { %>
+        <p>Author: <%= post.first_name %> <%= post.last_name %></p>
+        <% } else { %>
+        <p>Author: Anonymous</p>
+        <% } %>
+        <hr />
+      </li>
+      <% }); %>
+    </ul>
+    <% } else if (error) { %>
+    <p style="color: red"><%= error %></p>
+    <% } else { %>
+    <p>No posts yet. Be the first to share!</p>
     <% } %>
   </body>
 </html>

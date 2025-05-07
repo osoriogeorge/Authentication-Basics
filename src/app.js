@@ -5,13 +5,15 @@ const session = require("express-session");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcryptjs");
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
+//console.log("Variables de entorno cargadas:", process.env);
 
 const pool = new Pool({
-  user: "odinstudent", // Reemplaza con tu nombre de usuario de PostgreSQL (debe ser string)
+  user: "odinstudent",
   host: "localhost",
-  database: "authentication_exercise", // Reemplaza con el nombre de tu base de datos (debe ser string)
-  password: "kintarap", // Reemplaza con tu contraseña de PostgreSQL (debe ser string)
-  port: 5432, // El puerto predeterminado de PostgreSQL es 5432 (debe ser number)
+  database: "authentication_exercise",
+  password: "kintarap",
+  port: 5432,
 });
 
 const app = express();
@@ -70,8 +72,26 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-app.get("/", (req, res) => {
+/*app.get("/", (req, res) => {
   res.render("index", { user: req.user });
+});*/
+app.get("/", async (req, res) => {
+  try {
+    const { rows: posts } = await pool.query(`
+          SELECT p.id, p.title, p.content, p.created_at, u.first_name, u.last_name
+          FROM posts p
+          JOIN users u ON p.author_id = u.id
+          ORDER BY p.created_at DESC
+      `);
+    res.render("index", { user: req.user, posts: posts, error: null }); // Pass 'error' as null initially
+  } catch (err) {
+    console.error(err);
+    res.render("index", {
+      user: req.user,
+      posts: [],
+      error: "Failed to load posts.",
+    });
+  }
 });
 
 app.get("/sign-up", (req, res) => res.render("sign-up-form"));
@@ -87,10 +107,10 @@ app.post("/sign-up", async (req, res, next) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     await pool.query(
-      "INSERT INTO users (first_name, last_name, username, password_hash) VALUES ($1, $2, $3, $4)",
-      [first_name, last_name, username, hashedPassword]
+      "INSERT INTO users (first_name, last_name, username, password_hash, membership_status) VALUES ($1, $2, $3, $4, $5)",
+      [first_name, last_name, username, hashedPassword, true] // Set membership_status to true
     );
-    res.redirect("/");
+    res.redirect("/"); // Redirect to the login page after successful registration
   } catch (err) {
     console.error(err);
     return next(err);
@@ -113,6 +133,30 @@ app.get("/log-out", (req, res, next) => {
     }
     res.redirect("/");
   });
+});
+
+app.post("/new-post", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.redirect("/"); // Redirect if not logged in
+  }
+
+  const { title, content } = req.body;
+  const author_id = req.user.id; // Get the ID of the logged-in user
+
+  try {
+    await pool.query(
+      "INSERT INTO posts (title, content, author_id) VALUES ($1, $2, $3)",
+      [title, content, author_id]
+    );
+    res.redirect("/"); // Redirect back to the home page after creating the post
+  } catch (err) {
+    console.error(err);
+    res.render("index", {
+      user: req.user,
+      posts: [],
+      error: "Failed to create new post.",
+    });
+  }
 });
 
 app.listen(3000, () => console.log("app listening on port 3000!"));
