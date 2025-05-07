@@ -94,7 +94,7 @@ app.get("/", async (req, res) => {
   }
 });
 
-app.get("/sign-up", (req, res) => res.render("sign-up-form"));
+app.get("/sign-up", (req, res) => res.render("sign-up-form", { error: null }));
 
 app.post("/sign-up", async (req, res, next) => {
   const { first_name, last_name, username, password, confirmPassword } =
@@ -108,7 +108,7 @@ app.post("/sign-up", async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     await pool.query(
       "INSERT INTO users (first_name, last_name, username, password_hash, membership_status) VALUES ($1, $2, $3, $4, $5)",
-      [first_name, last_name, username, hashedPassword, true] // Set membership_status to true
+      [first_name, last_name, username, hashedPassword, false] // Set membership_status to false by default
     );
     res.redirect("/"); // Redirect to the login page after successful registration
   } catch (err) {
@@ -155,6 +155,60 @@ app.post("/new-post", async (req, res) => {
       user: req.user,
       posts: [],
       error: "Failed to create new post.",
+    });
+  }
+});
+
+app.get("/join-club", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.render("join-club-form", { error: null });
+  } else {
+    res.redirect("/");
+  }
+});
+
+app.post("/join-club", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.redirect("/");
+  }
+
+  const { secretPassword } = req.body;
+  const correctPassword = process.env.CLUB_SECRET_PASSWORD;
+
+  if (secretPassword === correctPassword) {
+    try {
+      await pool.query(
+        "UPDATE users SET membership_status = TRUE WHERE id = $1",
+        [req.user.id]
+      );
+      res.redirect("/"); // Redirect to home with updated membership
+    } catch (err) {
+      console.error(err);
+      res.render("join-club-form", {
+        error: "An error occurred while updating your membership.",
+      });
+    }
+  } else {
+    res.render("join-club-form", { error: "Incorrect secret password." });
+  }
+});
+
+app.post("/delete-post/:id", async (req, res) => {
+  if (!req.isAuthenticated() || !req.user.is_admin) {
+    return res.status(403).send("Unauthorized"); // Forbidden if not logged in or not admin
+  }
+
+  const postId = req.params.id;
+
+  try {
+    await pool.query("DELETE FROM posts WHERE id = $1", [postId]);
+    res.redirect("/"); // Redirect back to the home page after deleting the post
+  } catch (err) {
+    console.error(err);
+    res.render("index", {
+      user: req.user,
+      posts: [],
+      error: "Failed to delete post.",
     });
   }
 });

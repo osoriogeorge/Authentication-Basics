@@ -2,15 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="../styles/style.css" />
     <title>Anonymous Writers' Club</title>
+    <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <h1>Welcome to the Anonymous Writers' Club</h1>
-
     <% if (currentUser) { %>
     <p>Welcome, <%= currentUser.first_name %>!</p>
     <p><a href="/log-out">Log Out</a></p>
+    <p><a href="/join-club">Join the Exclusive Club</a></p>
     <hr />
     <h2>Create a New Post</h2>
     <form action="/new-post" method="POST">
@@ -29,6 +29,7 @@
     <% } else { %>
     <p>
       Join our exclusive club to see who wrote these amazing anonymous posts!
+      <a href="/sign-up">Sign Up</a>
     </p>
     <h2>Log In</h2>
     <form action="/log-in" method="POST">
@@ -56,7 +57,15 @@
         </p>
         <% if (currentUser) { %>
         <p>Author: <%= post.first_name %> <%= post.last_name %></p>
-        <% } else { %>
+        <% if (currentUser.is_admin) { %>
+        <form
+          action="/delete-post/<%= post.id %>"
+          method="POST"
+          style="display: inline"
+        >
+          <button type="submit">Delete</button>
+        </form>
+        <% } %> <% } else { %>
         <p>Author: Anonymous</p>
         <% } %>
         <hr />

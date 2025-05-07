@@ -1,0 +1,55 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+/node_modules
+
+# Production build
+/build
+/dist
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+.*.swo
+
+# TypeScript output
+/out
+/lib
+
+# Coverage
+/coverage
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Temporary files often created by developers
+*.orig
+*.bak
+*.sw?
+
+# Package lock file - important to keep, but sometimes excluded for library authors
+# /package-lock.json
+# /yarn.lock
+
+# Optional: Ignore build outputs of specific tools
+# /storybook-static
+# /.next
